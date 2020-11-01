@@ -3,10 +3,9 @@
 open Fabulous
 open Fabulous.XamarinForms
 open FsharpXamarin.Pages
-open Xamarin.Forms
 
 module Navigation = 
-    type Msg =
+    type Message =
         | GoToLoginPage
         | GoHomePage
         | PopPage 
@@ -23,14 +22,14 @@ module Navigation =
     let mapToCmd _ = Cmd.none
 
     let init () =
-        { LoggedIn = false; PageStack = [Some HomePage.Tag] }
+        { LoggedIn = false; PageStack = [Some "Home" ] }
 
     let update msg model =
         match msg with        
         | GoToLoginPage ->
-            { model with PageStack = [ Some LoginPage.Tag ] }, []
+            { model with PageStack = [ Some "Login" ] }, []
         | GoHomePage -> 
-            { model with PageStack = [ Some HomePage.Tag ] }, []
+            { model with PageStack = [ Some "Home"  ] }, []
         | PagePopped -> 
             if model.PageStack |> List.exists Option.isNone then 
                 { model with PageStack = model.PageStack |> List.filter Option.isSome }, []
@@ -44,14 +43,14 @@ module Navigation =
             { model with PageStack = (match model.PageStack with [] -> Some page :: model.PageStack | _ :: t -> Some page :: t) }, []
 
     let view msg dispatch =
-
-       View.NavigationPage(
-            popped = (fun _ -> dispatch PagePopped), 
-            poppedToRoot = (fun _ -> dispatch GoHomePage),
-            pages = [
-                if not(msg.LoggedIn) then
-                    yield (LoginPage.view dispatch)
-                else 
-                    yield (HomePage.view dispatch)
-            ]
-        )
+        View.Label()
+       //View.NavigationPage(
+        //    popped = (fun _ -> dispatch PagePopped), 
+        //    poppedToRoot = (fun _ -> dispatch GoHomePage),
+        //    pages = [
+        //        //if msg.LoggedIn then
+        //        //    yield (LoginPage.view dispatch)
+        //        //else 
+        //            yield (HomePage.view dispatch)
+        //    ]
+        //)

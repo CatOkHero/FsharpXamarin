@@ -6,23 +6,72 @@ open Fabulous
 open Fabulous.XamarinForms
 open Fabulous.XamarinForms.LiveUpdate
 open FsharpXamarin.MainPage
+open FsharpXamarin.Pages
 open Xamarin.Forms
 
 module App = 
     type Model = 
-        { LoggedIn: bool }
+        { LoginPageModel: LoginPage.Model option
+          HomePageModel: HomePage.Model option
+          IsLoggedIn: bool }
 
     type Msg = 
-        | LogIn
+        | LoginPageMsg of LoginPage.Msg
+        | HomePageMsg of HomePage.Msg
+        | GoToHomePage
+        | GoToLoginPage
 
     let init () = 
-      { LoggedIn = false }, Cmd.none
+      let loginModel, loginMsg = LoginPage.init
+      { LoginPageModel = Some(loginModel)
+        HomePageModel = None
+        IsLoggedIn = false }, (Cmd.map LoginPageMsg loginMsg)
 
-    let update msg model =
-      { LoggedIn = false }, Cmd.none
+    let hangleLoginPageExternalMsg externalMsg = 
+        match externalMsg with
+        | LoginPage.ExternalMsg.NoOp -> Cmd.none
+        | LoginPage.ExternalMsg.GoToHomePage -> Cmd.ofMsg (GoToHomePage)
 
-    let view msg dispatch =
-         (Navigation.view (Navigation.init()) dispatch)
+    let handleHomePageExternalMsg externalMsg = 
+        match externalMsg with
+        | HomePage.ExternalMsg.NoOp -> Cmd.none
+        | HomePage.ExternalMsg.GoToLoginPage -> Cmd.ofMsg (GoToLoginPage)
+
+    let update (msg : Msg) model =
+        match msg with
+        | LoginPageMsg msg ->
+            let m, cmd, externalMsg = LoginPage.update msg model.LoginPageModel
+            let cmd2 = hangleLoginPageExternalMsg externalMsg
+            let batchCmd = Cmd.batch [ (Cmd.map LoginPageMsg cmd); cmd2 ]
+            { model with LoginPageModel = m; IsLoggedIn = true }, batchCmd
+        | HomePageMsg msg ->
+            let m, cmd, externalMsg = HomePage.update msg model.HomePageModel
+            let cmd2 = handleHomePageExternalMsg externalMsg
+            let batchCmd = Cmd.batch [ (Cmd.map HomePageMsg cmd); cmd2 ]
+            { model with HomePageModel = m }, batchCmd
+        | GoToHomePage ->
+            let modelHomePage = HomePage.init
+            { model with HomePageModel = Some (modelHomePage)}, Cmd.none
+        | GoToLoginPage ->
+            let modelHomePage, loginMsg = LoginPage.init
+            { model with LoginPageModel = Some (modelHomePage); HomePageModel = None }, (Cmd.map LoginPageMsg loginMsg)
+
+
+    let view (model: Model) dispatch =
+        let allPages = 
+            if model.HomePageModel.IsSome then
+                //let loginPage = LoginPage.view (LoginPageMsg >> dispatch)
+                let homePage = HomePage.view (HomePageMsg >> dispatch)
+                //[ loginPage; homePage ]
+                [ homePage ]
+            else 
+                let loginPage = LoginPage.view (LoginPageMsg >> dispatch)
+                [ loginPage ]
+
+        View.NavigationPage(
+            //popped = (fun _ -> dispatch NavigationPopped),
+            pages = allPages
+        )
 
     // Note, this declaration is needed if you enable LiveUpdate
     let program = XamarinFormsProgram.mkProgram init update view

@@ -15,6 +15,10 @@ module LoginPage =
         | ShowErrorMessage of string
         | DoNothing
 
+    type ExternalMsg =
+        | NoOp
+        | GoToHomePage
+
     type Model =
         { Username: string
           Password: string
@@ -27,25 +31,20 @@ module LoginPage =
           Password = String.Empty; 
           IsLoading = false; 
           LoginFailed = false; 
-          LoginFailedMessage = String.Empty }
+          LoginFailedMessage = String.Empty }, Cmd.ofMsg(DoNothing)
 
-    let update msg (model : Model) =
+    let update msg (model : Model option) =
         match msg with
         | LoginFailed ->
-            { model with LoginFailed = true }, Cmd.none
+            model, Cmd.none, NoOp
         | LoginSuccessFull ->
-            
-            model, Cmd.none
+            model, Cmd.none, GoToHomePage
         | LoginValidating ->
-            match model.Username, model.Password with
-            | "", "" ->
-                model, Cmd.none
-            | _, _ ->
-                model, Cmd.none
+            model, Cmd.none, NoOp
         | ShowErrorMessage e ->
-            model, Cmd.none
+            model, Cmd.none, NoOp
         | DoNothing -> 
-            model, Cmd.none
+            model, Cmd.none, NoOp
 
     let view dispatch =
         let userName =
@@ -82,4 +81,3 @@ module LoginPage =
                         loginButton
                     ])
         )
-

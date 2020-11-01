@@ -15,6 +15,10 @@ module HomePage =
         | ShowErrorMessage of string
         | DoNothing
 
+    type ExternalMsg =
+        | NoOp
+        | GoToLoginPage
+
     type Model =
         { Username: string
           Password: string
@@ -29,22 +33,18 @@ module HomePage =
           LoginFailed = false; 
           LoginFailedMessage = String.Empty }
 
-    let update msg (model : Model) =
+    let update msg (model : Model option) =
         match msg with
         | LoginFailed ->
-            { model with LoginFailed = true }, Cmd.none, None
+            model, Cmd.none, NoOp
         | LoginSuccessFull ->
-            model, Cmd.none, None
+            model, Cmd.none, NoOp
         | LoginValidating ->
-            match model.Username, model.Password with
-            | "", "" ->
-                model, Cmd.none, None
-            | _, _ ->
-                model, Cmd.none, None
+            model, Cmd.none, GoToLoginPage
         | ShowErrorMessage e ->
-            model, Cmd.none, None
+            model, Cmd.none, NoOp
         | DoNothing -> 
-            model, Cmd.none, None
+            model, Cmd.none, NoOp
 
     let view dispatch =
         let userName =
@@ -67,7 +67,8 @@ module HomePage =
 
         let loginButton =
             View.Button(
-                text = "Login")
+                text = "Login",
+                command = (fun () -> dispatch LoginValidating))
 
         View.ContentPage(
             content = 
@@ -79,7 +80,7 @@ module HomePage =
                         usernameErrors
                         //password
                         //passwordErrors
-                        //loginButton
+                        loginButton
                     ])
         )
 
